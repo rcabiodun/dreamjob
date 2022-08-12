@@ -7,10 +7,11 @@ import ListItem from "../components/ListItem";
 import Message from "../components/toast";
 import { MotiView } from "@motify/components";
 import { Easing } from "react-native-reanimated";
+import VendorList from "../components/VendorList";
 import LottieView from 'lottie-react-native';
 
 
-export default  function Homescreen({route,navigation}){
+export default  function Vendorscreen({route,navigation}){
     const scrolling = useRef(new Animated.Value(0)).current;
     const translation = useRef(new Animated.Value(-100)).current;
     const[messages,setmessages]=useState([])
@@ -50,7 +51,7 @@ export default  function Homescreen({route,navigation}){
                 
               }
               console.log(userToken)
-              fetch('https://eathub-go.herokuapp.com/vendor/marketplace/',requestOptions).then(response=>response.json()).then(result=> {
+              fetch('https://eathub-go.herokuapp.com/vendor/vendorList/',requestOptions).then(response=>response.json()).then(result=> {
               //setsection(previousarr=>[...previousarr,...parsedresults])
 
               setsection(JSON.parse(result))
@@ -83,7 +84,7 @@ export default  function Homescreen({route,navigation}){
                 
               }
               console.log(userToken)
-              fetch('https://eathub-go.herokuapp.com/vendor/marketplace/other_locations',requestOptions).then(response=>response.json()).then(result=> {
+              fetch('https://eathub-go.herokuapp.com/vendor/vendorList/',requestOptions).then(response=>response.json()).then(result=> {
               //setsection(previousarr=>[...previousarr,...parsedresults])
 
               setsection(JSON.parse(result))
@@ -112,7 +113,7 @@ export default  function Homescreen({route,navigation}){
                 
               }
               console.log(userToken)
-              fetch('https://eathub-go.herokuapp.com/vendor/marketplace/',requestOptions).then(response=>response.json()).then(result=> {
+              fetch('https://eathub-go.herokuapp.com/vendor/vendorList/',requestOptions).then(response=>response.json()).then(result=> {
               //setsection(previousarr=>[...previousarr,...parsedresults])
 
               setsection(JSON.parse(result))
@@ -144,7 +145,7 @@ export default  function Homescreen({route,navigation}){
             
           }
           console.log(userToken)
-          fetch('https://eathub-go.herokuapp.com/vendor/marketplace/other_locations',requestOptions).then(response=>response.json()).then(result=> {
+          fetch('https://eathub-go.herokuapp.com/vendor/vendorList/',requestOptions).then(response=>response.json()).then(result=> {
           //setsection(previousarr=>[...previousarr,...parsedresults])
 
           setsection(JSON.parse(result))
@@ -173,7 +174,7 @@ export default  function Homescreen({route,navigation}){
           
         }
         console.log(userToken)
-        fetch('https://eathub-go.herokuapp.com/vendor/marketplace/',requestOptions).then(response=>response.json()).then(result=> {
+        fetch('https://eathub-go.herokuapp.com/vendor/vendorList/',requestOptions).then(response=>response.json()).then(result=> {
         //setsection(previousarr=>[...previousarr,...parsedresults])
 
         setsection(JSON.parse(result))
@@ -193,40 +194,18 @@ export default  function Homescreen({route,navigation}){
       </View>
     )
     }
-    function addMessage(message){
-      console.log("adding function")
-      setmessages(messages=>[...messages,message])
-      console.log(messages)
-    }
+    
    
     
     return (
       
       <View style={styles.container}>
-        <View style={{position:'absolute',top:25,left:0,right:0,paddingHorizontal:20}}>
-          {messages.map(m =>{
-            return(
-              <Message 
-                key={counter+1} 
-                message={m}
-                onHide={()=>{
-                  setmessages((messages)=>messages.filter((currentMessage)=>{
-                      currentMessage!==m
-
-                    }
-                  ))
-                }}
-              />
-
-            )
-          })}
-        </View> 
-        <View style={styles.header}>
+        
+        <View style={[styles.header,{marginTop:10}]}>
           <View
           >
-          <Image style={{width:80,height:80}} source={require("../assets/eathub.jpg")}/>
           </View>
-          <TouchableOpacity style={[styles.continue,styles.center]}  onPress={()=>{navigation.push('cart')}}>
+          <TouchableOpacity style={[styles.continue,styles.center]}  onPress={()=>{navigation.navigate('Homestack', {screen:'cart'})}}>
             
           <Ionicons name="cart" size={20} color={"#fff"} />
           
@@ -236,18 +215,20 @@ export default  function Homescreen({route,navigation}){
         <View style={styles.subheader}>
         
         <View >
-          <View style={styles.illustration}>
+          <MotiView 
+             
+            style={styles.illustration}>
            
 
             
-          <LottieView source={require('../assets/online-shopping.json')}
+            <LottieView source={require('../assets/woman-cooking.json')}
             autoPlay={true}
             loop={true}
             style={{width:'40%',aspectRatio:1}}
         ></LottieView>
             <View >
               <Text style={{color:'#fff'}} >
-                All your favourites vend
+                All your favourites 
               </Text>
               <Text style={{color:'#fff',fontWeight:'500',fontSize:20}} >
                 in one place.
@@ -262,7 +243,7 @@ export default  function Homescreen({route,navigation}){
                 value={isEnabled}
               />
             </View>
-          </View>
+          </MotiView>
         </View>
           
       </View>
@@ -271,6 +252,7 @@ export default  function Homescreen({route,navigation}){
           stickySectionHeadersEnabled={false}
           onRefresh={()=>makeInquiry()}
           refreshing={isrefreshing}
+          ListFooterComponent={sectionFooter}  
           showsVerticalScrollIndicator={false}
           sections={sections}
           onScroll={Animated.event(
@@ -289,14 +271,23 @@ export default  function Homescreen({route,navigation}){
             <View style={{marginTop:15}}>
                <View style={{flexDirection:'row',justifyContent:'space-between',alignItems:"center"}}>
 
-                <Text style={{fontSize:16,fontWeight:'700',color:'#808080',}}>{section.title}</Text>
+                <Text style={{fontSize:16,fontWeight:'700',color:'grey',}}>{section.title}</Text>
                 <TouchableOpacity style={{borderBottomWidth:1,borderBottomColor:'#ff7f50', justifyContent:'center',
-      alignItems:'center',}} onPress={()=>{navigation.push('itemList', {
-            vendorName: section.title,
-            
-            
-          })}}>
+      alignItems:'center',}} onPress={()=>{
+                if(section.title==="Latest vendors"){
+                  navigation.navigate('listofvendors', {
+                    location:"any",
+                  })
+                }else if(section.title==="Vendors near you"){navigation.navigate('listofvendors', {
+                  location:"same", })
+
+                }else if(section.title==="Vendors around you"){
+                  navigation.navigate('listofvendors', {
+                    location:"around", })
+                }  
+                }}>
                   <Text style={{fontSize:13,fontWeight:'700',color:'#808080'}}>see more...</Text>
+
                 </TouchableOpacity>
               </View>
               <FlatList
@@ -306,8 +297,12 @@ export default  function Homescreen({route,navigation}){
                 renderItem={({item,index})=>{
                  
                   return (
-                    <TouchableOpacity onPress={()=>{ console.log(item.id);navigation.push('itemDetail',{item:item.title,id:item.id})}}>
-                     <ListItem  func={addMessage} item={item}  />
+                    <TouchableOpacity  onPress={()=>{navigation.navigate('Homestack', {screen:'itemList',params:{
+                      vendorName: item.vendor_name}
+                      
+                      
+                    })}}>
+                     <VendorList  item={item}  />
                     </TouchableOpacity>
                   )}}
                 />
@@ -332,7 +327,7 @@ const styles = StyleSheet.create({
     container: {
       flex: 1, 
       paddingTop:StatusBar.currentHeight,
-      backgroundColor:'#fff'
+      backgroundColor:'#FAF9F6'
     },
     header:{
       top: 0,
@@ -425,6 +420,7 @@ const styles = StyleSheet.create({
     illustration:{
       flexDirection:'row',
       alignItems:"center",
+      elevation:5,
       backgroundColor:'#ff7f50',
       borderColor:'#ff7f50',
       borderWidth:0.3,

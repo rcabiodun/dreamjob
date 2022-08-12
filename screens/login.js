@@ -1,14 +1,41 @@
-import React, {useState,useEffect} from 'react';
-import { View,Text,StyleSheet,StatusBar ,TouchableOpacity, TextInput,TouchableWithoutFeedback,Keyboard,ActivityIndicator} from 'react-native';
+import React, {useState,useEffect,useRef} from 'react';
+import { View,Text,StyleSheet,StatusBar ,TouchableOpacity, TextInput,TouchableWithoutFeedback,Modal,Keyboard,ActivityIndicator,ScrollView,Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Google from 'expo-google-app-auth';
+import * as securestore from 'expo-secure-store';
+import {Picker} from '@react-native-picker/picker';
+import LoadingIndicator from '../components/loader';
+import {requestPermissionsAsync} from 'expo'
+import { timing } from 'react-native-reanimated';
+import Constants from 'expo-constants';
+import * as Notifications from 'expo-notifications';
+import { FontAwesome5 } from '@expo/vector-icons';
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 
 export default  function Loginscreen(props){
+    const [expoPushToken, setExpoPushToken] = useState('');
+    const [notification, setNotification] = useState(false);
+    const notificationListener = useRef();
+    const responseListener = useRef();
+
     const [emailAdd,setemail]=useState('')
+    const[visible,setvisible]=useState(false)
+    const[indicatorVisible,setIndicatorVisible]=useState(false)
+    const [address,setaddress]=useState('')
     const [password,setpassword]=useState('')
     const [password2,setpassword2]=useState('')
+    const [locations,setlocations]=useState([])
+
     const [message,setmessage]=useState('')
-    const [visible,setvisible]=useState(false)
+
+    let tracker=0
 
     function emailHandler(text){
       setemail(text)
@@ -19,21 +46,65 @@ export default  function Loginscreen(props){
     function password2Handler(text){
       setpassword2(text)
     }
+    
+    useEffect(() => {
+      registerForPushNotificationsAsync().then(token => setExpoPushToken(token));
+  
+      // This listener is fired whenever a notification is received while the app is foregrounded
+      notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+        setNotification(notification);
+      });
+  
+      // This listener is fired whenever a user taps on or interacts with a notification (works when app is foregrounded, backgrounded, or killed)
+      responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+        console.log(response);
+      });
+  
+      return () => {
+        Notifications.removeNotificationSubscription(notificationListener.current);
+        Notifications.removeNotificationSubscription(responseListener.current);
+      };
+    }, []);
   
     //storin user using asyncstorage
-    const mystore=(result)=>{
-      try{
-        console.log("storing...")
-        AsyncStorage.setItem('User',JSON.stringify(result)).then(()=>{console.log("wait o");props.navigation.replace('home')})
-        
-      }catch(error){
-        console.log(error)
+    async function registerForPushNotificationsAsync() {
+      let token;
+      if (Constants.isDevice) {
+        const { status: existingStatus } = await Notifications.getPermissionsAsync();
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Notifications.requestPermissionsAsync();
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          alert('Failed to get push token for push notification!');
+          return;
+        }
+        token = (await Notifications.getExpoPushTokenAsync()).data;
+        console.log(token);
+      } else {
+        alert('Must use physical device for Push Notifications');
       }
-
+    
+      if (Platform.OS === 'android') {
+        Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
+      }
+    
+      return token;
+    }
+    
+    
+    function save(value) {
+      securestore.setItemAsync('details', value).then(response=>{console.log("wait o");props.navigation.replace('main')} );
     }
     //connecting to google
     async function signInGoogle(){
-      setvisible(true)
+      setIndicatorVisible(true)
       try{
         let result=await Google.logInAsync({
           androidClientId:'972944938854-r84qck7gtqftsc8ndv7gk2snvljoekc0.apps.googleusercontent.com',
@@ -53,41 +124,40 @@ export default  function Loginscreen(props){
       console.log(e)
     }
   }
-
-  //connnecting to my api using google
-  function loginMyApiGoogle(user){
-      const requestOptions={
-        method:'Post',
-        headers:{'Content-Type': 'application/json'},
-        body: JSON.stringify({email:user.email ,password:'peaklane',fullname:user.photoUrl })
-      }
-      fetch('https://eriolu.herokuapp.com/api/',requestOptions).then(response=>response.json()).then(result=> mystore(result))
-      console.log("Registration successful")
-      
-    }
-
-
-
-
-
-
-
+ 
 
     //conneting to my api
     function loginapi(){
-      if(password2==password && password.length >=8){
-        setvisible(true)
+      if(password){
+        setIndicatorVisible(true)
         const requestOptions={
           method:'Post',
           headers:{'Content-Type': 'application/json'},
-          body: JSON.stringify({email: emailAdd,password:password})
+          body: JSON.stringify({email: emailAdd,password:password,pushToken:expoPushToken})
         }
-        fetch('https://eriolu.herokuapp.com/api/',requestOptions).then(response=>response.json()).then(result=> mystore(result))
+        fetch('https://eathub-go.herokuapp.com/api/login/',requestOptions).then(response=>response.json()).then(result=> {
+        if(result.message==="invalid email address" || result.message==="password is invalid"){
+            console.log(result)
+            setmessage("Passwords or email is incorrect")
+            setvisible(true)
+            setIndicatorVisible(false)
+        }
+        
+        else{
+            console.log(result)
+            save(JSON.stringify(result))
+        }
+        
+        
+        })
         console.log("Registration successful")
         
       }
       else{
-        setmessage("Passwords don't match / is not equal or greater than 8 ")
+        setmessage("Passwords or email is incorrect")
+        console.log(locations)
+        setvisible(true)
+
       
       }
 
@@ -95,64 +165,67 @@ export default  function Loginscreen(props){
     }
     
     //for skipping to homepage when logged in 
-    useEffect(async()=>{
-      try{
-        const storedUser= await AsyncStorage.getItem('User')
-        
-        if(storedUser !== null){
-          props.navigation.navigate('home')
-      }
-      }catch(error){
-        console.log("an error ocured")
-      }
-    },[])
-    
-    const store= async(result)=>{
-      await AsyncStorage.setItem('User',result)
-
-    }
 
     return(
       <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()} >
+        
         <View style={styles.container}>
-              <View style={styles.arrow}>
-                <TouchableOpacity style={styles.arrowbutton}>
-  
-                  <Text>-</Text>
-                </TouchableOpacity>
-
-            </View>
+        <Modal
+        animationType="slide"
+        transparent={true}
+        visible={visible}
+        >
+        <View style={styles.modalcontainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalText}>{message}</Text>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => setvisible(!visible)}>
+              <Text style={styles.textStyle}>close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+        
+        <ScrollView>
+        
             <View style={styles.vhead}>
-                <Text style={styles.vtext}>Create</Text>
-                <Text style={styles.vtext}>an account</Text>
-                <Text style={styles.subtext}>Fill the details & create your account</Text>
+                <Text style={styles.vtext}>Log into</Text>
+                <Text style={styles.vtext}>your account</Text>
 
             </View>
+            
             <View style={styles.vinput}>
                 <TextInput placeholder={'Email'} style={styles.textinp} onChangeText={setemail}/>
               
                 <TextInput placeholder={'Password'} secureTextEntry={true} style={styles.textinp} onChangeText={setpassword}/>
-                <TextInput placeholder={'Confirm password'} secureTextEntry={true} onChangeText={setpassword2} style={styles.textinp}/>
-                {message ? <Text style={styles.subtext}>{message}</Text> : null }
-                <TouchableOpacity style={styles.continue} onPress={loginapi}>
+          
+                
+                <TouchableOpacity style={styles.continue} onPress={loginapi} >
                   
                   <Text style={styles.btn} 
-                  >Continue</Text>
+                  >Login</Text>
                 </TouchableOpacity>
+                 
+                { indicatorVisible ?
+                <View style={styles.indicator}>
+                  <LoadingIndicator size={20}/>
+                </View> : null}
                 <View style={styles.FG}>
                 
                 <TouchableOpacity style={styles.auth} onPress={signInGoogle}>
   
-                    <Text style={styles.tauth}>G</Text>
+                <FontAwesome5 name="google" size={24} color="#ff7f50" />
+                    
                 </TouchableOpacity>
+                
                 
 
                 </View>
-                {visible ?
-                <View style={styles.indicator}>
-                  <ActivityIndicator size="large" color="#fff" />
-                </View> : null}
+                
             </View>
+     </ScrollView>
+      
       </View>
     </TouchableWithoutFeedback>   
 
@@ -165,19 +238,19 @@ const styles = StyleSheet.create({
       flex: 1,
       backgroundColor: '#fff',
       paddingTop:StatusBar.currentHeight+20,
-      backgroundColor:'#DBD2ED',
   
   
     },
     arrow:{
-      paddingHorizontal:10,
-      paddingVertical:20,
+      paddingHorizontal:30,
+      paddingVertical:5,
     },
     arrowbutton:{
-      width:40,
-      height:40,
-      borderRadius:20,
-      backgroundColor:'#fff',
+      width:80,
+      paddingHorizontal:20,
+      paddingVertical:13,
+      borderRadius:10,
+      backgroundColor:'#ff7f50',
       justifyContent:'center',
       alignItems:'center',
       shadowColor:'red',
@@ -187,7 +260,8 @@ const styles = StyleSheet.create({
     vhead:{
       paddingHorizontal:45,
       paddingVertical:30,
-      marginTop:10
+      marginTop:65,
+      marginBottom:20
   
     },
     vtext:{
@@ -201,26 +275,29 @@ const styles = StyleSheet.create({
     textinp:{
       width:250,
       backgroundColor:'#fff',
-      paddingVertical:7,
-      paddingHorizontal:7,
+      paddingVertical:9,
+      paddingHorizontal:9,
       borderRadius:15,
-      elevation:7,
-      marginTop:5,
-      marginBottom:5,
+      elevation:1,
+      marginTop:12,
+      borderColor:'#E2BB20',
+      borderWidth:0.5,
+      marginBottom:12,
     },
     continue:{
-      width:250,
+      width:150,
       paddingHorizontal:20,
-      paddingVertical:20,
-      backgroundColor:'#AC8BED',
-      marginTop:27,
+      paddingVertical:16,
+      backgroundColor:'#ff7f50',
+      marginTop:35,
       alignItems:'center',
-      opacity:0.7,
-      borderRadius:10
+      elevation:2,
+      borderRadius:100
     },
     btn:{
-      fontWeight:'700',
-      fontSize:15
+      fontWeight:'bold',
+      fontSize:15,
+      color:'#fff'
     },
   
     FG:{
@@ -229,23 +306,63 @@ const styles = StyleSheet.create({
       padding:7,
     },
     auth:{
-      width:40,
-      height:40,
+      width:45,
+      height:45,
       alignItems:'center',
       justifyContent:'center',
       backgroundColor:'#fff',
       margin:20,
-      borderRadius:20,
+      borderRadius:45,
       elevation:5
     },
     tauth:{
-      fontWeight:'bold'
+      fontWeight:'bold',
+      color:'#fff'
   
     },
     
     indicator:{
-      alignItems:'center'
-    }
+      alignItems:'center',
+      justifyContent:'center',
+      marginTop:10
+    },
+    modalcontainer:{
+        flex:1,
+        alignItems:'center',
+        justifyContent:'center'
+
+
+    },
+
+    modalView: {
+      margin: 20,
+      backgroundColor: 'white',
+      borderRadius: 20,
+      width:200,
+      padding: 30,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 2,
+      },
+      shadowOpacity: 0.25,
+      elevation: 5,
+    },
+    button: {
+        borderRadius: 20,
+        backgroundColor:'#ff7f50',        
+        padding: 19,
+        marginTop:8,
+        elevation: 2,
+      },
+      textStyle: {
+          color: 'white',
+          fontWeight: 'bold',
+      },
+      modalText: {
+          marginBottom: 15,
+      },
     
   
   });

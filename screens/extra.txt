@@ -1,1 +1,162 @@
-()=> props.navigation.replace('home')
+import React from 'react';
+import {View, SafeAreaView, StyleSheet, Platform, StatusBar, ImageBackground, Image} from 'react-native';
+import {
+  Avatar,
+  Title,
+  Caption,
+  Text,
+  TouchableRipple,
+} from 'react-native-paper';
+
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+
+import files from '../assets/filesBase64';
+
+ const ProfileScreen = () => {
+  return (
+    <SafeAreaView style={styles.container}>
+    <ImageBackground style={{flex:1,backgroundColor:'#fff'}}>
+     
+
+      <View style={styles.userInfoSection}>
+        <View style={{flexDirection: 'row', marginTop: 15}}>
+          <Avatar.Image 
+            source={require("../assets/other/logo1.png")}
+            size={100}
+          />
+          <View style={{marginLeft: 20}}>
+            <Title style={[styles.title, {
+              marginTop:15,
+              marginBottom: 5,
+            }]}>Vertigo</Title>
+            <Caption style={styles.caption}>@the_suicide_sheep</Caption>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.userInfoSection}>
+        <View style={styles.row}>
+          <Icon name="map-marker-radius" color="#808080" size={20}/>
+          <Text style={{color:"#808080", marginLeft: 20}}>Lagos, Nigeria</Text>
+        </View>
+        <View style={styles.row}>
+          <Icon name="phone" color="#808080" size={20}/>
+          <Text style={{color:"#808080", marginLeft: 20}}>+2348156940124</Text>
+        </View>
+        <View style={styles.row}>
+          <Icon name="email" color="#808080" size={20}/>
+          <Text style={{color:"#808080", marginLeft: 20}}>the_suicide_sheep@gmail.com</Text>
+        </View>
+      </View>
+
+      <View style={styles.infoBoxWrapper}>
+          <View style={[styles.infoBox, {
+            borderRightColor: 'red',
+            borderRightWidth: 1
+          }]}>
+            <Title>$140,500,500.50</Title>
+            <Caption> my Wallet</Caption>
+          </View>
+          <View style={styles.infoBox}>
+            <Title>10</Title>
+            <Caption> Total Orders</Caption>
+          </View>
+      </View>
+
+      <View style={styles.menuWrapper}>
+        <TouchableRipple onPress={() => {}}>
+          <View style={styles.menuItem}>
+            <Icon name="heart-outline" color="red" size={25}/>
+            <Text style={styles.menuItemText}>Favorites</Text>
+          </View>
+        </TouchableRipple>
+        <TouchableRipple onPress={() => {}}>
+          <View style={styles.menuItem}>
+            <Icon name="credit-card" color="red" size={25}/>
+            <Text style={styles.menuItemText}>Payment</Text>
+          </View>
+        </TouchableRipple>
+        <TouchableRipple>
+          <View style={styles.menuItem}>
+            <Icon name="share-outline" color="red" size={25}/>
+            <Text style={styles.menuItemText}>Share</Text>
+          </View>
+        </TouchableRipple>
+        <TouchableRipple onPress={() => {}}>
+          <View style={styles.menuItem}>
+            <Icon name="account-check-outline" color="red" size={25}/>
+            <Text style={styles.menuItemText}>Orders</Text>
+          </View>
+        </TouchableRipple>
+        <TouchableRipple onPress={() => {}}>
+          <View style={styles.menuItem}>
+            <Icon name="account-check-outline" color="red" size={25}/>
+            <Text style={styles.menuItemText}>Support</Text>
+          </View>
+        </TouchableRipple>
+        <TouchableRipple rippleColor='red' onPress={() => {}}>
+          <View style={styles.menuItem}>
+            <Icon name="settings-outline" color="red" size={25}/>
+            <Text style={styles.menuItemText}>Settings</Text>
+          </View>
+        </TouchableRipple>
+      </View>
+      </ImageBackground>
+    </SafeAreaView>
+  );
+};
+
+export default ProfileScreen;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingTop:Platform.OS === "android" ? StatusBar.currentHeight : 0,
+    
+  },
+  userInfoSection: {
+    paddingHorizontal: 30,
+    marginBottom: 25,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  caption: {
+    fontSize: 14,
+    lineHeight: 14,
+    fontWeight: '500',
+  },
+  row: {
+    flexDirection: 'row',
+    marginBottom: 10,
+  },
+  infoBoxWrapper: {
+    borderBottomColor: 'red',
+    borderBottomWidth: 1,
+    borderTopColor: 'red',
+    borderTopWidth: 1,
+    flexDirection: 'row',
+    height: 100,
+  },
+  infoBox: {
+    width: '50%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  menuWrapper: {
+    marginTop: 10,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    paddingVertical: 15,
+    paddingHorizontal: 30,
+  },
+  menuItemText: {
+    color: '#808080',
+    marginLeft: 20,
+    fontWeight: '600',
+    fontSize: 16,
+    lineHeight: 26,
+  },
+});

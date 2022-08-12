@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "71766546917",
+    "project_id": "push-83789",
+    "storage_bucket": "push-83789.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:71766546917:android:e8e48621c966c4668df70c",
+        "android_client_info": {
+          "package_name": "com.creed.eathub"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "71766546917-jht5i9qn20d6vbnrvq6fi3es43j6v1dk.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUZ6J4kqR1a9p7jlXsoqJ6d4RZQNxUF5A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "71766546917-jht5i9qn20d6vbnrvq6fi3es43j6v1dk.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
